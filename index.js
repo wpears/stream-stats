@@ -1,25 +1,35 @@
 var PassThrough = require('readable-stream/passthrough');
 var inherits = require('inherits');
 
+var results = {};
+
 inherits(StatStream, PassThrough);
 
 StatStream.prototype._transform = function(chunk, enc, cb){
-  if(!this.initialTime){this.initialTime = process.hrtime();
+  if(!this.initialTime) this.initialTime = process.hrtime();
 
-  var time = this.getTime() ;
+  var time = this._getTime();
 
   var statObj = {
-     
-  } 
-  console.log("\nCHUNK TYPE: %s", Buffer.isBuffer(chunk) && "Buffer" || typeof chunk);
-  console.log(chunk);
-  console.log("\n");
+    time: time - lastTime,
+    bytes: chunk.length,
+    chunk: this.store ? chunk : null  
+  }
+
+  this.lastTime = time;
+
+  this.stats.chunks.push(statObj); 
+  this.push(chunk);
+
   cb();
 }
 
 StatStream.prototype._flush = function(cb){
   this.stats.chunkCount = chunks.length;
-  this.stats.time = this.getTime(); 
+  this.stats.time = this._getTime(); 
+  this.stats.byteCount = this.stats.chunks.reduce(function(a,b){
+    return a.bytes + b.bytes;
+  });
   cb();
 }
 
@@ -28,17 +38,22 @@ StatStream.prototype._getTime(){
   return diff[0]*1000 + diff[1]/1e6;
 }
 
+StatStream.prototype.getResults(label){
+  return results[label];
+}
+
 function StatStream(label, obj){
   if(!(this instanceof StatStream)) return new StatStream(label, obj);
   PassThrough.call(this, obj);
 
   this.stats = {
-    label: label,
     chunks: [],
     chunkCount: 0,
     byteCount: 0,
     time: 0
   }
+
+  results[label] = this.stats;
 
   this.initialTime = null;
   this.lastTime = 0;
