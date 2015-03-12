@@ -1,0 +1,32 @@
+{
+  "name": "stream-stats",
+  "version": "0.0.1",
+  "description": "Get stats for your streams",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wpears/stream-stats.git"
+  },
+  "keywords": [
+    "stream",
+    "stats",
+    "readable-stream",
+    "testing"
+  ],
+  "author": "Wyatt Pearsall <wyatt.pearsall@cfpb.gov>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wpears/stream-stats/issues"
+  },
+  "homepage": "https://github.com/wpears/stream-stats",
+  "dependencies": {
+    "inherits": "^2.0.1",
+    "readable-stream": "^1.0.33"
+  },
+  "devDependencies": {
+    "tape": "^3.5.0"
+  }
+}
