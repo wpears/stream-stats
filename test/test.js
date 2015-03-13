@@ -3,17 +3,31 @@ var test = require('tape');
 var stats = require('../index.js');
 var fs = require('fs');
 
-var input = 'test/data/preludes.txt'
-var output = 'test/data/precop.txt';
 
-test('Buffer test', function(t){
-  t.plan(1);
-  fs.createReadStream(input, {highWaterMark:1024})
+function lengthCheck(t, statObj){
+  return function(err, data){
+    if(err) throw new Error('Error testing output file size');
+    t.equal(statObj.byteCount, data.length);  
+  }
+}
+
+
+test('512 byte chunks', function(t){
+  t.plan(2);
+
+  var input = 'test/data/preludes.txt'
+  var output = 'test/data/precop.txt';
+
+  fs.createReadStream(input, {highWaterMark:512})
     .pipe(stats('Buffer test'))
     .pipe(fs.createWriteStream(output))
     .on('close',function(){
-      t.ok(stats.getResults('Buffer test'), 'Got a result');
-      console.log(stats.getResults('Buffer test'));
+      var statObj = stats.getResults('Buffer test');
+
+      t.equal(statObj.chunkCount, 4, 'Got a result');
+
+      fs.readFile(input, lengthCheck(t, statObj));  
+
       fs.unlinkSync(output);
-    });
+   });
 });
