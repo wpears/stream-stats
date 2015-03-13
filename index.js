@@ -7,11 +7,10 @@ inherits(StatStream, PassThrough);
 
 StatStream.prototype._transform = function(chunk, enc, cb){
   if(!this.initialTime) this.initialTime = process.hrtime();
-
   var time = this._getTime();
 
   var statObj = {
-    time: time - lastTime,
+    time: time - this.lastTime,
     bytes: chunk.length,
     chunk: this.store ? chunk : null  
   }
@@ -25,7 +24,7 @@ StatStream.prototype._transform = function(chunk, enc, cb){
 }
 
 StatStream.prototype._flush = function(cb){
-  this.stats.chunkCount = chunks.length;
+  this.stats.chunkCount = this.stats.chunks.length;
   this.stats.time = this._getTime(); 
   this.stats.byteCount = this.stats.chunks.reduce(function(a,b){
     return a.bytes + b.bytes;
@@ -33,12 +32,12 @@ StatStream.prototype._flush = function(cb){
   cb();
 }
 
-StatStream.prototype._getTime(){
+StatStream.prototype._getTime = function(){
   var diff = process.hrtime(this.initialTime);
   return diff[0]*1000 + diff[1]/1e6;
 }
 
-StatStream.prototype.getResults(label){
+StatStream.getResults = function(label){
   return results[label];
 }
 
