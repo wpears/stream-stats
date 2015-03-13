@@ -43,6 +43,7 @@ StatStream.prototype.getResults(label){
 }
 
 function StatStream(label, obj){
+  if(!label) throw new Error("Must provide a label for stats.");
   if(!(this instanceof StatStream)) return new StatStream(label, obj);
   PassThrough.call(this, obj);
 
