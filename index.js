@@ -12,7 +12,7 @@ StatStream.prototype._transform = function(chunk, enc, cb){
   var statObj = {
     time: time - this.lastTime,
     bytes: chunk.length,
-    chunk: this.store ? chunk : null  
+    chunk: this.stats.store ? chunk : null  
   }
 
   this.lastTime = time;
@@ -24,13 +24,22 @@ StatStream.prototype._transform = function(chunk, enc, cb){
 }
 
 StatStream.prototype._flush = function(cb){
+  if(this.stats.store){
+    this.stats.store = Buffer.concat(this.stats.chunks.map(mapChunks));
+  }
   this.stats.chunkCount = this.stats.chunks.length;
   this.stats.time = this._getTime(); 
-  this.stats.byteCount = this.stats.chunks.reduce(function(a,b){
-    return a + b.bytes;
-  }, 0);
+  this.stats.byteCount = this.stats.chunks.reduce(reduceBytes, 0);
   cb();
+  }
+
+function mapChunks(v){
+  return v.chunk;
 }
+
+ function reduceBytes(a,b){
+   return a + b.bytes;
+ } 
 
 StatStream.prototype._getTime = function(){
   if(this.initialTime === null) return 0;
@@ -52,14 +61,15 @@ function StatStream(label, obj){
     chunks: [],
     chunkCount: 0,
     byteCount: 0,
-    time: 0
+    time: 0,
+    store: null 
   }
 
   results[label] = this.stats;
 
   this.initialTime = null;
   this.lastTime = 0;
-  if(obj && obj.store) this.store = 1;
+  if(obj && obj.store) this.stats.store = new Buffer(0);
 
 }
 

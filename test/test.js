@@ -12,7 +12,7 @@ function lengthCheck(t, statObj){
 
 function testChunksByLength(len){
   test(len+' byte chunks', function(t){
-    t.plan(1);
+    t.plan(3);
 
     var input = 'test/data/preludes.txt'
     var output = 'test/data/'+ Math.random() + '.txt';
@@ -24,14 +24,24 @@ function testChunksByLength(len){
       .pipe(fs.createWriteStream(output))
 
     midStats.on('end',function(){
+      fs.unlinkSync(output);   
+
       var statObj = stats.getResults(testName);
+      t.equal(statObj.store, null, "Store is empty");
+      t.equal(statObj.chunkCount, statObj.chunks.length, "Chunk count set properly");
+      if(len === 0){
+        return t.ok(statObj, "Doesn't throw with a 0 highwater mark.");
+      }
 
       fs.readFile(input, lengthCheck(t, statObj));  
       
-      fs.unlinkSync(output);   
     });
   });
 }
 
 testChunksByLength(512);
 testChunksByLength(1);
+testChunksByLength(0);
+testChunksByLength(1e6);
+
+
