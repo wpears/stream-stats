@@ -7,14 +7,24 @@ var objMode = {objectMode: true}
 inherits(StatStream, PassThrough);
 
 StatStream.prototype._transform = function(chunk, enc, cb){
-  if(!this.initialTime) this.initialTime = process.hrtime();
+  if(this.initialTime === null) this.initialTime = process.hrtime();
   var time = this._getTime();
-
-  var statObj = {
-    time: time - this.lastTime,
-    len: this._obj ? 1 : chunk.length,
-    chunk: this.stats.store ? chunk : null  
-  }
+  var currTime = time - this.lastTime;
+  var statObj;
+  
+  if(this._obj){
+    statObj = {
+      time: currTime,
+      len: 1,
+      chunk: this._store ? chunk : null
+    }
+  }else{
+    statObj = {
+      time: currTime,
+      len: chunk.length,
+      chunk: this._store ? chunk : null 
+    }
+  } 
 
   this.lastTime = time;
 
@@ -25,14 +35,20 @@ StatStream.prototype._transform = function(chunk, enc, cb){
 }
 
 StatStream.prototype._flush = function(cb){
-  if(this.stats.store){
-    this.stats.store = Buffer.concat(this.stats.chunks.map(mapChunks));
+  var chunks = this.stats.chunks;
+  if(this._store){
+    if(this._obj) this.stats.store = chunks.map(mapObjChunks).join('');
+    else this.stats.store = Buffer.concat(chunks.map(mapChunks))
   }
-  this.stats.chunkCount = this.stats.chunks.length;
+  this.stats.chunkCount = chunks.length;
   this.stats.time = this._getTime(); 
-  this.stats.len = this.stats.chunks.reduce(reduceLen, 0);
+  this.stats.len = chunks.reduce(reduceLen, 0);
   cb();
   }
+
+function mapObjChunks(v){
+  return JSON.stringify(v.chunk);
+}
 
 function mapChunks(v){
   return v.chunk;
@@ -63,7 +79,13 @@ function StatStream(label, obj){
   if(!(this instanceof StatStream)) return new StatStream(label, obj);
   PassThrough.call(this, obj);
 
-  if(obj&&obj.objectMode) this._obj = 1;
+  if(obj){
+    if(obj.objectMode) this._obj = 1;
+    if(obj.store) this._store = 1;
+  }
+
+  this.initialTime = null;
+  this.lastTime = 0;
 
   this.stats = {
     label: label,
@@ -75,11 +97,6 @@ function StatStream(label, obj){
   }
 
   results[label] = this.stats;
-
-  this.initialTime = null;
-  this.lastTime = 0;
-  if(obj && obj.store) this.stats.store = new Buffer(0);
-
 }
 
 module.exports = StatStream;
