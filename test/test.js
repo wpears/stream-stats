@@ -15,8 +15,8 @@ function lengthCheck(t, statObj){
 }
 
 function testChunksByLength(len, store){
-  test(len+' byte chunks', function(t){
-    t.plan(3);
+  test(len+' byte chunks, store is '+(store?'set':'unset'), function(t){
+    t.plan(5);
 
     var input = 'test/data/preludes.txt'
     var output = 'test/data/'+ Math.random() + '.txt';
@@ -31,6 +31,8 @@ function testChunksByLength(len, store){
       fs.unlinkSync(output);   
 
       var statObj = stats.getResults(testName);
+      t.notOk(midStats._obj, 'Object flag is unset');
+      t.ok(midStats._store == store, 'Store flag is '+ (store?'set':'unset'));
       t.equal(statObj.chunkCount, statObj.chunks.length, 'Chunk count set properly');
       if(len === 0){
         t.ok(statObj, 'Doesn\'t throw with a 0 highwater mark.');
@@ -50,10 +52,13 @@ testChunksByLength(0);
 testChunksByLength(1e6, 1);
 
 test('Object Mode', function(t){
-    t.plan(3);
+    t.plan(5);
 
     var testName = 'Object mode';
-    var midStats = stats.obj(testName);
+    var midStats = stats.obj(testName,{store:1});
+    var objects = [{a:1}, {b:2}, {c:3}, {d:4}, {e:5}];
+    var stringified = objects.map(function(v){return JSON.stringify(v)}).join('');
+
     var output = new Writable({objectMode:true});
     output._write = function(chunk,enc,cb){return cb()}
      
@@ -62,14 +67,15 @@ test('Object Mode', function(t){
     midStats.on('end',function(){
 
       var statObj = stats.getResults(testName);
-      t.equal(statObj.store, null, 'Store is empty');
+      t.ok(midStats._obj, 'Object mode flag is set');
+      t.ok(midStats._store, 'Store flag is set');
       t.equal(statObj.chunkCount, statObj.chunks.length, 'Chunk count set properly');
       t.equal(statObj.chunkCount, statObj.len, 'Each chunk is an object');
+      t.equal(statObj.store, stringified, 'Object Store is valid');
     });
 
-    midStats.write({a:1});
-    midStats.write({b:2});
-    midStats.write({c:3});
-    midStats.write({d:4});
-    midStats.end({e:5});
+    objects.forEach(function(v,i){
+      if(i < objects.length - 1) midStats.write(v);
+      else midStats.end(v);
+    })
 });
