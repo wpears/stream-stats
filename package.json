@@ -1,6 +1,6 @@
 {
   "name": "stream-stats",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Get stats for your streams",
   "main": "index.js",
   "scripts": {
