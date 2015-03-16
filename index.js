@@ -2,6 +2,7 @@ var PassThrough = require('readable-stream/passthrough');
 var inherits = require('inherits');
 
 var results = {};
+var objMode = {objectMode: true}
 
 inherits(StatStream, PassThrough);
 
@@ -11,7 +12,7 @@ StatStream.prototype._transform = function(chunk, enc, cb){
 
   var statObj = {
     time: time - this.lastTime,
-    bytes: chunk.length,
+    len: this._obj ? 1 : chunk.length,
     chunk: this.stats.store ? chunk : null  
   }
 
@@ -29,7 +30,7 @@ StatStream.prototype._flush = function(cb){
   }
   this.stats.chunkCount = this.stats.chunks.length;
   this.stats.time = this._getTime(); 
-  this.stats.byteCount = this.stats.chunks.reduce(reduceBytes, 0);
+  this.stats.len = this.stats.chunks.reduce(reduceLen, 0);
   cb();
   }
 
@@ -37,8 +38,8 @@ function mapChunks(v){
   return v.chunk;
 }
 
- function reduceBytes(a,b){
-   return a + b.bytes;
+ function reduceLen(a,b){
+   return a + b.len;
  } 
 
 StatStream.prototype._getTime = function(){
@@ -51,16 +52,24 @@ StatStream.getResults = function(label){
   return results[label];
 }
 
+StatStream.obj = function(label, obj){
+  if(obj) obj.objectMode = true;
+  else obj = objMode;
+  return new StatStream(label, obj); 
+}
+
 function StatStream(label, obj){
   if(!label) throw new Error("Must provide a label for stats.");
   if(!(this instanceof StatStream)) return new StatStream(label, obj);
   PassThrough.call(this, obj);
 
+  if(obj&&obj.objectMode) this._obj = 1;
+
   this.stats = {
     label: label,
     chunks: [],
     chunkCount: 0,
-    byteCount: 0,
+    len: 0,
     time: 0,
     store: null 
   }
