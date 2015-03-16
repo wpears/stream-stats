@@ -27,6 +27,7 @@
     "readable-stream": "^1.0.33"
   },
   "devDependencies": {
+    "buffer-equal": "0.0.1",
     "tape": "^3.5.0"
   }
 }
