@@ -3,7 +3,6 @@ var test = require('tape');
 var bufferEqual = require('buffer-equal');
 var isStream = require('isstream');
 var stats = require('../index.js');
-var Writable = require('readable-stream/writable');
 
 
 function lengthCheck(t, statObj){
@@ -61,13 +60,10 @@ test('Object Mode', function(t){
     var midStats = stats.obj(testName,{store:1});
     var objects = [{a:1}, {b:2}, {c:3}, {d:4}, {e:5}];
     var stringified = objects.map(function(v){return JSON.stringify(v)}).join('');
-
-    var output = new Writable({objectMode:true});
-    output._write = function(chunk,enc,cb){return cb()}
      
     t.ok(isStream(midStats),'Stats returns a stream');
 
-    midStats.pipe(output);
+    midStats.endPipe();
 
     midStats.on('end',function(){
 

@@ -1,4 +1,5 @@
 var PassThrough = require('readable-stream/passthrough');
+var Writable = require('readable-stream/writable');
 var inherits = require('inherits');
 
 var results = {};
@@ -44,7 +45,13 @@ StatStream.prototype._flush = function(cb){
   this.stats.time = this._getTime(); 
   this.stats.len = chunks.reduce(reduceLen, 0);
   cb();
-  }
+}
+
+StatStream.prototype._getTime = function(){
+  if(this.initialTime === null) return 0;
+  var diff = process.hrtime(this.initialTime);
+  return diff[0]*1000 + diff[1]/1e6;
+}
 
 function mapObjChunks(v){
   return JSON.stringify(v.chunk);
@@ -58,12 +65,13 @@ function mapChunks(v){
    return a + b.len;
  } 
 
-StatStream.prototype._getTime = function(){
-  if(this.initialTime === null) return 0;
-  var diff = process.hrtime(this.initialTime);
-  return diff[0]*1000 + diff[1]/1e6;
-}
+function empty(data,enc,cb){return cb();}
 
+StatStream.prototype.endPipe = function(){
+  var sink = new Writable({objectMode: this._obj});
+  sink._write = empty;
+  return this.pipe(sink);
+}
 StatStream.getResults = function(label){
   return results[label];
 }
