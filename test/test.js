@@ -1,6 +1,7 @@
 var fs = require('fs');
 var test = require('tape');
 var bufferEqual = require('buffer-equal');
+var isStream = require('isstream');
 var stats = require('../index.js');
 var Writable = require('readable-stream/writable');
 
@@ -16,17 +17,19 @@ function lengthCheck(t, statObj){
 
 function testChunksByLength(len, store){
   test(len+' byte chunks, store is '+(store?'set':'unset'), function(t){
-    t.plan(5);
+    t.plan(6);
 
     var input = 'test/data/preludes.txt'
     var output = 'test/data/'+ Math.random() + '.txt';
     var testName = len + ' length chunk';
     var midStats = store ? stats(testName, {store:1}) : stats(testName);
      
+    t.ok(isStream(midStats),'Stats returns a stream');
+
     fs.createReadStream(input, {highWaterMark:len})
       .pipe(midStats)
       .pipe(fs.createWriteStream(output))
-
+     
     midStats.on('end',function(){
       fs.unlinkSync(output);   
 
@@ -52,7 +55,7 @@ testChunksByLength(0);
 testChunksByLength(1e6, 1);
 
 test('Object Mode', function(t){
-    t.plan(5);
+    t.plan(6);
 
     var testName = 'Object mode';
     var midStats = stats.obj(testName,{store:1});
@@ -62,6 +65,8 @@ test('Object Mode', function(t){
     var output = new Writable({objectMode:true});
     output._write = function(chunk,enc,cb){return cb()}
      
+    t.ok(isStream(midStats),'Stats returns a stream');
+
     midStats.pipe(output);
 
     midStats.on('end',function(){
