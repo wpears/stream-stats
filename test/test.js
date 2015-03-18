@@ -32,7 +32,7 @@ function testChunksByLength(len, store){
           'The final stream in the pipeline is a sink');
      
     midStats.on('end',function(){
-      var statObj = stats.getResults(testName);
+      var statObj = stats.getResult(testName);
       t.notOk(midStats._obj, 'Object flag is unset');
       t.ok(midStats._store == store, 'Store flag is '+ (store?'set':'unset'));
       t.equal(statObj.chunkCount, statObj.chunks.length, 'Chunk count set properly');
@@ -70,7 +70,7 @@ test('Object Mode', function(t){
 
     midStats.on('end',function(){
 
-      var statObj = stats.getResults(testName);
+      var statObj = midStats.getResult();
       t.ok(midStats._obj, 'Object mode flag is set');
       t.ok(midStats._store, 'Store flag is set');
       t.equal(statObj.chunkCount, statObj.chunks.length, 'Chunk count set properly');

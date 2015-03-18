@@ -57,11 +57,15 @@ StatStream.prototype._getTime = function(){
 }
 
 
-StatStream.prototype.sink= function(){
+StatStream.prototype.sink = function(){
   var sinkStream = new Writable({objectMode: this._obj});
   sinkStream._write = empty;
   return this.pipe(sinkStream);
 }
+
+StatStream.prototype.getResult = function(){
+  return this.stats;
+} 
 
 
 function mapObjChunks(v){
@@ -79,7 +83,7 @@ function reduceLen(a,b){
 function empty(data,enc,cb){return cb();}
 
 
-StatStream.getResults = function(label){
+StatStream.getResult = function(label){
   return results[label];
 }
 
