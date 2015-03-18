@@ -7,6 +7,7 @@ var objMode = {objectMode: true}
 
 inherits(StatStream, PassThrough);
 
+
 StatStream.prototype._transform = function(chunk, enc, cb){
   if(this.initialTime === null) this.initialTime = process.hrtime();
   var time = this._getTime();
@@ -35,6 +36,7 @@ StatStream.prototype._transform = function(chunk, enc, cb){
   cb();
 }
 
+
 StatStream.prototype._flush = function(cb){
   var chunks = this.stats.chunks;
   if(this._store){
@@ -47,11 +49,20 @@ StatStream.prototype._flush = function(cb){
   cb();
 }
 
+
 StatStream.prototype._getTime = function(){
   if(this.initialTime === null) return 0;
   var diff = process.hrtime(this.initialTime);
   return diff[0]*1000 + diff[1]/1e6;
 }
+
+
+StatStream.prototype.sink= function(){
+  var sinkStream = new Writable({objectMode: this._obj});
+  sinkStream._write = empty;
+  return this.pipe(sinkStream);
+}
+
 
 function mapObjChunks(v){
   return JSON.stringify(v.chunk);
@@ -61,26 +72,24 @@ function mapChunks(v){
   return v.chunk;
 }
 
- function reduceLen(a,b){
-   return a + b.len;
- } 
+function reduceLen(a,b){
+  return a + b.len;
+} 
 
 function empty(data,enc,cb){return cb();}
 
-StatStream.prototype.endPipe = function(){
-  var sink = new Writable({objectMode: this._obj});
-  sink._write = empty;
-  return this.pipe(sink);
-}
+
 StatStream.getResults = function(label){
   return results[label];
 }
+
 
 StatStream.obj = function(label, obj){
   if(obj) obj.objectMode = true;
   else obj = objMode;
   return new StatStream(label, obj); 
 }
+
 
 function StatStream(label, obj){
   if(!label) throw new Error("Must provide a label for stats.");
@@ -106,5 +115,6 @@ function StatStream(label, obj){
 
   results[label] = this.stats;
 }
+
 
 module.exports = StatStream;

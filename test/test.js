@@ -16,22 +16,22 @@ function lengthCheck(t, statObj){
 
 function testChunksByLength(len, store){
   test(len+' byte chunks, store is '+(store?'set':'unset'), function(t){
-    t.plan(6);
+    t.plan(7);
 
     var input = 'test/data/preludes.txt'
-    var output = 'test/data/'+ Math.random() + '.txt';
     var testName = len + ' length chunk';
     var midStats = store ? stats(testName, {store:1}) : stats(testName);
      
     t.ok(isStream(midStats),'Stats returns a stream');
 
-    fs.createReadStream(input, {highWaterMark:len})
+    var pipeline = fs.createReadStream(input, {highWaterMark:len})
       .pipe(midStats)
-      .pipe(fs.createWriteStream(output))
+      .sink();
+
+    t.ok(isStream.isWritable(pipeline) && !isStream.isReadable(pipeline), 
+          'The final stream in the pipeline is a sink');
      
     midStats.on('end',function(){
-      fs.unlinkSync(output);   
-
       var statObj = stats.getResults(testName);
       t.notOk(midStats._obj, 'Object flag is unset');
       t.ok(midStats._store == store, 'Store flag is '+ (store?'set':'unset'));
@@ -54,7 +54,7 @@ testChunksByLength(0);
 testChunksByLength(1e6, 1);
 
 test('Object Mode', function(t){
-    t.plan(6);
+    t.plan(7);
 
     var testName = 'Object mode';
     var midStats = stats.obj(testName,{store:1});
@@ -63,7 +63,10 @@ test('Object Mode', function(t){
      
     t.ok(isStream(midStats),'Stats returns a stream');
 
-    midStats.endPipe();
+    var pipeline = midStats.sink();
+
+    t.ok(isStream.isWritable(pipeline) && !isStream.isReadable(pipeline), 
+          'The final stream in the pipeline is a sink');
 
     midStats.on('end',function(){
 
