@@ -56,8 +56,7 @@ testChunksByLength(1e6, 1);
 test('Object Mode', function(t){
     t.plan(7);
 
-    var testName = 'Object mode';
-    var midStats = stats.obj(testName,{store:1});
+    var midStats = stats.obj({store:1});
     var objects = [{a:1}, {b:2}, {c:3}, {d:4}, {e:5}];
     var stringified = objects.map(function(v){return JSON.stringify(v)}).join('');
      
