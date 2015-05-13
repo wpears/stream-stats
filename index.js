@@ -89,6 +89,11 @@ StatStream.getResult = function(label){
 
 
 StatStream.obj = function(label, obj){
+  if(typeof label === 'object'){
+    obj = label;
+    label = '';
+  }
+  
   if(obj) obj.objectMode = true;
   else obj = objMode;
   return new StatStream(label, obj); 
@@ -96,7 +101,11 @@ StatStream.obj = function(label, obj){
 
 
 function StatStream(label, obj){
-  if(!label) throw new Error("Must provide a label for stats.");
+  if(typeof label === 'object'){
+    obj = label;
+    label = '';
+  }
+  if(!label) label = '';
   if(!(this instanceof StatStream)) return new StatStream(label, obj);
   PassThrough.call(this, obj);
 
@@ -117,7 +126,7 @@ function StatStream(label, obj){
     store: null 
   }
 
-  results[label] = this.stats;
+  if(label) results[label] = this.stats;
 }
 
 
