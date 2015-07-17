@@ -26,9 +26,10 @@ function testChunksByLength(len, store){
 
     var pipeline = fs.createReadStream(input, {highWaterMark: len})
       .pipe(midStats)
-      .sink();
+      .pipe(midStats.sink())
 
-    t.equal(midStats, pipeline, 'Calling sink doesn\'t interrupt the pipeline');
+    t.ok(isStream.isWritable(pipeline) && !isStream.isReadable(pipeline),
+          'The final stream in the pipeline is a sink');
 
     midStats.on('end', function(){
       var statObj = stats.getResult(testName);
@@ -61,9 +62,10 @@ test('Object Mode', function(t){
 
     t.ok(isStream(midStats), 'Stats returns a stream');
 
-    var pipeline = midStats.sink();
+    var pipeline = midStats.pipe(midStats.sink())
 
-    t.ok(pipeline, midStats, 'Sink keeps the pipeline intact.');
+    t.ok(isStream.isWritable(pipeline) && !isStream.isReadable(pipeline),
+          'The final stream in the pipeline is a sink');
 
     midStats.on('end', function(){
 

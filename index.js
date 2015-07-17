@@ -13,7 +13,7 @@ StatStream.prototype._transform = function(chunk, enc, cb){
   var time = this._getTime();
   var currTime = time - this.lastTime;
   var statObj;
-  
+
   if(this._obj){
     statObj = {
       time: currTime,
@@ -24,13 +24,13 @@ StatStream.prototype._transform = function(chunk, enc, cb){
     statObj = {
       time: currTime,
       len: chunk.length,
-      chunk: this._store ? chunk : null 
+      chunk: this._store ? chunk : null
     }
-  } 
+  }
 
   this.lastTime = time;
 
-  this.stats.chunks.push(statObj); 
+  this.stats.chunks.push(statObj);
   this.push(chunk);
 
   cb();
@@ -44,7 +44,7 @@ StatStream.prototype._flush = function(cb){
     else this.stats.store = Buffer.concat(chunks.map(mapChunks))
   }
   this.stats.chunkCount = chunks.length;
-  this.stats.time = this._getTime(); 
+  this.stats.time = this._getTime();
   this.stats.len = chunks.reduce(reduceLen, 0);
   cb();
 }
@@ -60,13 +60,12 @@ StatStream.prototype._getTime = function(){
 StatStream.prototype.sink = function(){
   var sinkStream = new Writable({objectMode: this._obj});
   sinkStream._write = empty;
-  this.pipe(sinkStream);
-  return this;
+  return sinkStream;
 }
 
 StatStream.prototype.getResult = function(){
   return this.stats;
-} 
+}
 
 
 function mapObjChunks(v){
@@ -77,11 +76,11 @@ function mapChunks(v){
   return v.chunk;
 }
 
-function reduceLen(a,b){
+function reduceLen(a, b){
   return a + b.len;
-} 
+}
 
-function empty(data,enc,cb){return cb();}
+function empty(data, enc, cb){return cb()}
 
 
 StatStream.getResult = function(label){
@@ -94,10 +93,10 @@ StatStream.obj = function(label, obj){
     obj = label;
     label = '';
   }
-  
+
   if(obj) obj.objectMode = true;
   else obj = objMode;
-  return new StatStream(label, obj); 
+  return new StatStream(label, obj);
 }
 
 
@@ -124,7 +123,7 @@ function StatStream(label, obj){
     chunkCount: 0,
     len: 0,
     time: 0,
-    store: null 
+    store: null
   }
 
   if(label) results[label] = this.stats;
