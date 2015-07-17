@@ -62,7 +62,7 @@ test('Object Mode', function(t){
 
     t.ok(isStream(midStats), 'Stats returns a stream');
 
-    var pipeline = midStats.pipe(midStats.sink())
+    var pipeline = midStats.pipe(stats.sink({objectMode: 1}))
 
     t.ok(isStream.isWritable(pipeline) && !isStream.isReadable(pipeline),
           'The final stream in the pipeline is a sink');

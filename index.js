@@ -63,6 +63,12 @@ StatStream.prototype.sink = function(){
   return sinkStream;
 }
 
+StatStream.sink = function(obj){
+  var sinkStream = new Writable(obj);
+  sinkStream._write = empty;
+  return sinkStream;
+}
+
 StatStream.prototype.getResult = function(){
   return this.stats;
 }
