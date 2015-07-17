@@ -60,7 +60,8 @@ StatStream.prototype._getTime = function(){
 StatStream.prototype.sink = function(){
   var sinkStream = new Writable({objectMode: this._obj});
   sinkStream._write = empty;
-  return this.pipe(sinkStream);
+  this.pipe(sinkStream);
+  return this;
 }
 
 StatStream.prototype.getResult = function(){
