@@ -8,7 +8,7 @@ var stats = require('../index.js');
 function lengthCheck(t, statObj){
   return function(err, data){
     if(err) throw new Error('Error testing output file size');
-    t.equal(statObj.len, data.length, 'Byte count is accurate');  
+    t.equal(statObj.len, data.length, 'Byte count is accurate');
     if(statObj.store) t.ok(bufferEqual(statObj.store, data), 'Data in, data out.')
     else t.equal(statObj.store, null, 'No data stored')
   }
@@ -20,30 +20,29 @@ function testChunksByLength(len, store){
 
     var input = 'test/data/preludes.txt'
     var testName = len + ' length chunk';
-    var midStats = store ? stats(testName, {store:1}) : stats(testName);
-     
-    t.ok(isStream(midStats),'Stats returns a stream');
+    var midStats = store ? stats(testName, {store: 1}) : stats(testName);
 
-    var pipeline = fs.createReadStream(input, {highWaterMark:len})
+    t.ok(isStream(midStats), 'Stats returns a stream');
+
+    var pipeline = fs.createReadStream(input, {highWaterMark: len})
       .pipe(midStats)
       .sink();
 
-    t.ok(isStream.isWritable(pipeline) && !isStream.isReadable(pipeline), 
-          'The final stream in the pipeline is a sink');
-     
-    midStats.on('end',function(){
+    t.equal(midStats, pipeline, 'Calling sink doesn\'t interrupt the pipeline');
+
+    midStats.on('end', function(){
       var statObj = stats.getResult(testName);
       t.notOk(midStats._obj, 'Object flag is unset');
-      t.ok(midStats._store == store, 'Store flag is '+ (store?'set':'unset'));
+      t.equal(midStats._store, store, 'Store flag is '+ (store?'set':'unset'));
       t.equal(statObj.chunkCount, statObj.chunks.length, 'Chunk count set properly');
       if(len === 0){
         t.ok(statObj, 'Doesn\'t throw with a 0 highwater mark.');
-        t.equal(statObj.chunkCount, 0, 'No zero length chunks.') 
+        t.equal(statObj.chunkCount, 0, 'No zero length chunks.');
         return;
       }
 
-      fs.readFile(input, lengthCheck(t, statObj));  
-      
+      fs.readFile(input, lengthCheck(t, statObj));
+
     });
   });
 }
@@ -56,18 +55,17 @@ testChunksByLength(1e6, 1);
 test('Object Mode', function(t){
     t.plan(7);
 
-    var midStats = stats.obj({store:1});
-    var objects = [{a:1}, {b:2}, {c:3}, {d:4}, {e:5}];
+    var midStats = stats.obj({store: 1});
+    var objects = [{a: 1}, {b: 2}, {c: 3}, {d: 4}, {e: 5}];
     var stringified = objects.map(function(v){return JSON.stringify(v)}).join('');
-     
-    t.ok(isStream(midStats),'Stats returns a stream');
+
+    t.ok(isStream(midStats), 'Stats returns a stream');
 
     var pipeline = midStats.sink();
 
-    t.ok(isStream.isWritable(pipeline) && !isStream.isReadable(pipeline), 
-          'The final stream in the pipeline is a sink');
+    t.ok(pipeline, midStats, 'Sink keeps the pipeline intact.');
 
-    midStats.on('end',function(){
+    midStats.on('end', function(){
 
       var statObj = midStats.getResult();
       t.ok(midStats._obj, 'Object mode flag is set');
@@ -77,7 +75,7 @@ test('Object Mode', function(t){
       t.equal(statObj.store, stringified, 'Object Store is valid');
     });
 
-    objects.forEach(function(v,i){
+    objects.forEach(function(v, i){
       if(i < objects.length - 1) midStats.write(v);
       else midStats.end(v);
     })
